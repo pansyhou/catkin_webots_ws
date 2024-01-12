@@ -53,10 +53,12 @@
 #include "std_srvs/Empty.h"
 // 目标坐标点列表
 std::vector<std::pair<float, float>> waypoints = {
-    {5.54, 8.54},
-    {6.54, 7.54},
-    {5.54, 6.54},
-    {6.54, 5.54}
+    // {5.54, 8.54},
+    // {6.54, 7.54},
+    // {5.54, 6.54},
+    // {6.54, 5.54}
+    {2.0,2.0},{4.0,0.0},{6.0,2.0},{8.0,0.0}
+
 };
 
 // 当前小乌龟的位置
@@ -81,9 +83,9 @@ void moveToGoal(float target_x, float target_y, ros::Publisher& cmd_vel_pub)
 
         // if(current_pose.x==0)break;
         // 计算线速度和角速度
-        float linear_speed = 0.15 * distanceToTarget(target_x, target_y);
+        float linear_speed = 0.1 * distanceToTarget(target_x, target_y);
         float desired_angle = std::atan2(target_y - current_pose.y, target_x - current_pose.x);
-        float angular_speed = 3 * (desired_angle - current_pose.theta);
+        float angular_speed = 7 * (desired_angle - current_pose.theta);
 
         // 发布速度控制命令
         geometry_msgs::Twist cmd_vel;
@@ -103,8 +105,8 @@ int main(int argc, char **argv)
 
     ros::NodeHandle nh;
     //初始化现在位置，不然会跑飞
-    current_pose.x=5.0f;
-    current_pose.y=5.0f;
+    current_pose.x=0.0f;
+    current_pose.y=0.0f;
     //先删除原有乌龟，再生成新的
     ros::ServiceClient kill_client = nh.serviceClient<turtlesim::Kill>("/kill");
     turtlesim::Kill srv;
@@ -118,9 +120,9 @@ int main(int argc, char **argv)
     ros::ServiceClient client= nh.serviceClient<turtlesim::Spawn>("/spawn");
     turtlesim::Spawn spawn;
 
-    spawn.request.x=5.54;
-    spawn.request.y=5.54;
-    spawn.request.theta=1.52;
+    spawn.request.x=current_pose.x;
+    spawn.request.y=current_pose.y;
+    spawn.request.theta=0;
     spawn.request.name="turtle1";
 
     //   发送请求
@@ -151,77 +153,10 @@ int main(int argc, char **argv)
         moveToGoal(waypoint.first, waypoint.second, cmd_vel_pub);
 
     }
-
+    //删除乌龟
+    kill_client.call(srv);
     ros::spin();
 
     return 0;
 }
-
-// #include "ros/ros.h"
-// #include "geometry_msgs/Twist.h"
-// #include "turtlesim/Pose.h"
-// #include <cmath>
-
-// class TurtleController {
-// public:
-//     TurtleController() : nh(), waypoints({{5.54, 8.54}, {6.54, 7.54}, {5.54, 6.54}, {6.54, 5.54}}) {
-//         pose_sub = nh.subscribe("/turtle1/pose", 1000, &TurtleController::poseCallback, this);
-//         cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel", 1000);
-//     }
-
-//     void moveToGoal() {
-//         for (const auto& waypoint : waypoints) {
-//             while (distanceToTarget(waypoint.first, waypoint.second) > 0.02) {
-//                 float linear_speed = computeLinearSpeed(waypoint.first, waypoint.second);
-//                 float angular_speed = computeAngularSpeed(waypoint.first, waypoint.second);
-                
-//                 geometry_msgs::Twist cmd_vel;
-//                 cmd_vel.linear.x = linear_speed;
-//                 cmd_vel.angular.z = angular_speed;
-//                 cmd_vel_pub.publish(cmd_vel);
-
-//                 ros::spinOnce();
-//             }
-//         }
-//     }
-
-// private:
-//     ros::NodeHandle nh;
-//     ros::Subscriber pose_sub;
-//     ros::Publisher cmd_vel_pub;
-//     turtlesim::Pose current_pose;
-//     std::vector<std::pair<float, float>> waypoints;
-
-//     void poseCallback(const turtlesim::Pose::ConstPtr& pose_msg) {
-//         current_pose = *pose_msg;
-//     }
-
-//     float distanceToTarget(float target_x, float target_y) {
-//         return std::sqrt(std::pow(target_x - current_pose.x, 2) + std::pow(target_y - current_pose.y, 2));
-//     }
-
-//     float computeLinearSpeed(float target_x, float target_y) {
-//         float error = distanceToTarget(target_x, target_y);
-//         return 0.5 * error;
-//     }
-
-//     float computeAngularSpeed(float target_x, float target_y) {
-//         float desired_angle = std::atan2(target_y - current_pose.y, target_x - current_pose.x);
-//         return 4 * (desired_angle - current_pose.theta);
-//     }
-// };
-
-// int main(int argc, char **argv)
-// {
-//     ros::init(argc, argv, "turtle_controller");
-//     TurtleController controller;
-//     ros::Rate rate(10);
-
-//     while (ros::ok()) {
-//         controller.moveToGoal();
-//         rate.sleep();
-//     }
-
-//     return 0;
-// }
 
